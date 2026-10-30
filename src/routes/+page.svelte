@@ -1,60 +1,23 @@
 <script lang="ts">
+  import { enhance } from '$app/forms';
+
   type GroceryList = {
-    id: number;
+    id: string;
     name: string;
-    items: string[];
+    items: { id: string; name: string; completed: boolean }[];
   };
 
-  const starterLists: GroceryList[] = [
-    { id: 1, name: 'Weekly groceries', items: ['Avocados', 'Sourdough bread', 'Oat milk'] },
-    { id: 2, name: 'Weekend BBQ', items: ['Corn on the cob', 'Veggie burgers'] }
-  ];
-
+  export let data: { username: string | null; lists: GroceryList[] };
   let username = '';
-  let signedInAs = '';
-  let lists = starterLists;
-  let activeListId = 1;
+  let activeListId = '';
   let newItem = '';
   let newListName = '';
   let showNewList = false;
 
+  $: lists = data.lists;
+  $: if (!activeListId || !lists.some((list) => list.id === activeListId)) activeListId = lists[0]?.id ?? '';
   $: activeList = lists.find((list) => list.id === activeListId) ?? lists[0];
-  $: completedCount = activeList?.items.filter((item) => item.startsWith('✓ ')).length ?? 0;
-
-  function signIn() {
-    const trimmedUsername = username.trim();
-    if (trimmedUsername) signedInAs = trimmedUsername;
-  }
-
-  function addItem() {
-    const item = newItem.trim();
-    if (!item || !activeList) return;
-    lists = lists.map((list) =>
-      list.id === activeList.id ? { ...list, items: [...list.items, item] } : list
-    );
-    newItem = '';
-  }
-
-  function toggleItem(itemIndex: number) {
-    lists = lists.map((list) => {
-      if (list.id !== activeList.id) return list;
-      const items = [...list.items];
-      items[itemIndex] = items[itemIndex].startsWith('✓ ')
-        ? items[itemIndex].slice(2)
-        : `✓ ${items[itemIndex]}`;
-      return { ...list, items };
-    });
-  }
-
-  function createList() {
-    const name = newListName.trim();
-    if (!name) return;
-    const id = Math.max(...lists.map((list) => list.id), 0) + 1;
-    lists = [...lists, { id, name, items: [] }];
-    activeListId = id;
-    newListName = '';
-    showNewList = false;
-  }
+  $: completedCount = activeList?.items.filter((item) => item.completed).length ?? 0;
 </script>
 
 <svelte:head>
@@ -65,7 +28,7 @@
   />
 </svelte:head>
 
-{#if !signedInAs}
+{#if !data.username}
   <main class="flex min-h-screen items-center justify-center bg-cream px-6 py-12">
     <section class="grid w-full max-w-5xl overflow-hidden rounded-[2rem] bg-white shadow-card md:grid-cols-2">
       <div class="flex min-h-[32rem] flex-col justify-between bg-leaf p-8 text-white md:p-12">
@@ -88,11 +51,12 @@
           <h2 class="font-display text-4xl">Let's make a list.</h2>
           <p class="mt-3 text-slate-500">Sign in with a username to get started.</p>
         </div>
-        <form on:submit|preventDefault={signIn}>
+        <form method="POST" action="?/signIn" use:enhance>
           <label class="mb-2 block text-sm font-semibold" for="username">Your username</label>
           <input
             id="username"
             bind:value={username}
+            name="username"
             class="input input-bordered h-14 w-full rounded-xl border-slate-200 bg-slate-50"
             placeholder="e.g. alex"
             autocomplete="username"
@@ -114,8 +78,10 @@
           <span class="text-2xl">🥭</span> Mango List
         </a>
         <div class="flex items-center gap-3 text-sm">
-          <span class="hidden text-slate-500 sm:inline">Hi, {signedInAs}</span>
-          <button class="btn btn-ghost btn-sm rounded-lg" on:click={() => (signedInAs = '')}>Sign out</button>
+          <span class="hidden text-slate-500 sm:inline">Hi, {data.username}</span>
+          <form method="POST" action="?/signOut" use:enhance>
+            <button class="btn btn-ghost btn-sm rounded-lg" type="submit">Sign out</button>
+          </form>
         </div>
       </div>
     </header>
@@ -138,8 +104,8 @@
           {/each}
         </nav>
         {#if showNewList}
-          <form class="mt-5" on:submit|preventDefault={createList}>
-            <input bind:value={newListName} class="input input-sm w-full rounded-lg bg-white" placeholder="List name" />
+          <form class="mt-5" method="POST" action="?/createList" use:enhance on:submit={() => (showNewList = false)}>
+            <input bind:value={newListName} name="name" class="input input-sm w-full rounded-lg bg-white" placeholder="List name" required />
             <div class="mt-2 flex gap-2">
               <button class="btn btn-sm flex-1 rounded-lg bg-leaf text-white hover:bg-[#416c49]" type="submit">Add</button>
               <button class="btn btn-ghost btn-sm rounded-lg" type="button" on:click={() => (showNewList = false)}>Cancel</button>
@@ -156,8 +122,9 @@
             </div>
             <span class="rounded-full bg-[#f7e6bf] px-4 py-2 text-sm font-semibold text-[#916624]">This week</span>
           </div>
-          <form class="mb-5 flex gap-3" on:submit|preventDefault={addItem}>
-            <input bind:value={newItem} class="input h-14 flex-1 rounded-xl border-slate-200 bg-white shadow-sm" placeholder="Add an item..." aria-label="New grocery item" />
+          <form class="mb-5 flex gap-3" method="POST" action="?/addItem" use:enhance>
+            <input type="hidden" name="listId" value={activeList.id} />
+            <input bind:value={newItem} name="name" class="input h-14 flex-1 rounded-xl border-slate-200 bg-white shadow-sm" placeholder="Add an item..." aria-label="New grocery item" required />
             <button class="btn h-14 rounded-xl border-0 bg-leaf px-6 text-white hover:bg-[#416c49]" type="submit">Add item</button>
           </form>
           <div class="overflow-hidden rounded-2xl bg-white shadow-card">
@@ -167,10 +134,14 @@
                 <p class="font-semibold">Your list is ready for its first item.</p>
               </div>
             {:else}
-              {#each activeList.items as item, index}
+              {#each activeList.items as item}
                 <label class="flex cursor-pointer items-center gap-4 border-b border-slate-100 px-5 py-4 last:border-0 hover:bg-slate-50">
-                  <input type="checkbox" class="checkbox checkbox-success" checked={item.startsWith('✓ ')} on:change={() => toggleItem(index)} />
-                  <span class:line-through={item.startsWith('✓ ')} class:text-slate-400={item.startsWith('✓ ')}>{item.replace(/^✓ /, '')}</span>
+                  <form method="POST" action="?/toggleItem" use:enhance>
+                    <input type="hidden" name="itemId" value={item.id} />
+                    <input type="hidden" name="completed" value={String(!item.completed)} />
+                    <input type="checkbox" class="checkbox checkbox-success" checked={item.completed} on:change={(event) => event.currentTarget.form?.requestSubmit()} />
+                  </form>
+                  <span class:line-through={item.completed} class:text-slate-400={item.completed}>{item.name}</span>
                 </label>
               {/each}
             {/if}
