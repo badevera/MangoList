@@ -1,4 +1,4 @@
-import { integer, pgTable, text, timestamp, uuid } from 'drizzle-orm/pg-core';
+import { boolean, integer, pgTable, text, timestamp, uuid } from 'drizzle-orm/pg-core';
 
 export const users = pgTable('users', {
   id: uuid('id').defaultRandom().primaryKey(),
@@ -21,6 +21,7 @@ export const groceryItems = pgTable('grocery_items', {
     .notNull()
     .references(() => groceryLists.id, { onDelete: 'cascade' }),
   name: text('name').notNull(),
+  completed: boolean('completed').notNull().default(false),
   position: integer('position').notNull().default(0),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow().notNull()
 });

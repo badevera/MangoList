@@ -1,0 +1,1 @@
+ALTER TABLE "grocery_items" ADD COLUMN "completed" boolean DEFAULT false NOT NULL;
