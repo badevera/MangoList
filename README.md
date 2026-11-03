@@ -45,3 +45,8 @@ To reset the local database completely, run `docker compose down -v`.
 - `npm run db:down` — stop local PostgreSQL
 - `npm run db:generate` — generate a Drizzle migration from schema changes
 - `npm run db:migrate` — apply pending Drizzle migrations
+
+## Health checks
+
+- `GET /api/health` — returns JSON with application and PostgreSQL checks. It returns `200` when all checks pass and `503` when a dependency is unavailable.
+- `/health` — browser-friendly view of the same checks and response codes.
