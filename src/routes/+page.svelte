@@ -8,6 +8,7 @@
   };
 
   export let data: { username: string | null; lists: GroceryList[] };
+  export let form: { message?: string } | null = null;
   let username = '';
   let activeListId = '';
   let newItem = '';
@@ -65,6 +66,9 @@
           <button class="btn mt-5 h-14 w-full rounded-xl border-0 bg-mango text-ink hover:bg-[#ef9d27]" type="submit">
             Continue <span aria-hidden="true">→</span>
           </button>
+          {#if form?.message}
+            <p class="mt-3 text-center text-sm text-red-600" role="alert">{form.message}</p>
+          {/if}
         </form>
         <p class="mt-6 text-center text-xs text-slate-400">No password needed. Just groceries.</p>
       </div>
@@ -79,7 +83,7 @@
         </a>
         <div class="flex items-center gap-3 text-sm">
           <span class="hidden text-slate-500 sm:inline">Hi, {data.username}</span>
-          <form method="POST" action="?/signOut" use:enhance>
+          <form method="POST" action="?/signOut">
             <button class="btn btn-ghost btn-sm rounded-lg" type="submit">Sign out</button>
           </form>
         </div>

@@ -1,4 +1,4 @@
-import { fail } from '@sveltejs/kit';
+import { fail, redirect } from '@sveltejs/kit';
 import { and, asc, eq, inArray } from 'drizzle-orm';
 import { db } from '$lib/server/db';
 import { groceryItems, groceryLists, users } from '$lib/server/db/schema';
@@ -59,10 +59,20 @@ export const actions: Actions = {
       secure: false,
       maxAge: 60 * 60 * 24 * 30
     });
+
+    redirect(303, '/');
   },
 
   signOut: async ({ cookies }) => {
-    cookies.delete('userId', { path: '/' });
+    cookies.set('userId', '', {
+      path: '/',
+      httpOnly: true,
+      sameSite: 'lax',
+      secure: false,
+      maxAge: 0,
+      expires: new Date(0)
+    });
+    redirect(303, '/');
   },
 
   addItem: async ({ request, cookies }) => {
