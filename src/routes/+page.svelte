@@ -32,19 +32,16 @@
 {#if !data.username}
   <main class="flex min-h-screen items-center justify-center bg-cream px-6 py-12">
     <section class="grid w-full max-w-5xl overflow-hidden rounded-[2rem] bg-white shadow-card md:grid-cols-2">
-      <div class="flex min-h-[32rem] flex-col justify-between bg-leaf p-8 text-white md:p-12">
+      <div class="flex min-h-[32rem] flex-col bg-leaf p-8 text-white md:p-12">
         <div class="flex items-center gap-2 text-lg font-bold">
           <span class="text-2xl">🥭</span>
           <span>Mango List</span>
         </div>
-        <div>
-          <p class="mb-4 text-sm font-bold uppercase tracking-[0.2em] text-[#d9ecd5]">Less fuss. More fresh.</p>
-          <h1 class="font-display text-5xl leading-tight md:text-6xl">Everything you need, all in one place.</h1>
-          <p class="mt-6 max-w-sm text-lg leading-8 text-[#e2f0df]">
-            Keep your grocery trips organized and your brain focused on what matters.
-          </p>
+        <div class="flex flex-1 items-center">
+          <h1 class="font-display text-5xl leading-tight md:text-6xl">
+            Everyday lists for groceries and more
+          </h1>
         </div>
-        <p class="text-sm text-[#d9ecd5]">Simple lists for everyday life.</p>
       </div>
       <div class="flex min-h-[32rem] flex-col justify-center p-8 md:p-12">
         <div class="mb-10">
