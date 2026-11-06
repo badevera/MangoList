@@ -4,4 +4,8 @@ build
 .env
 .env.*
 !.env.example
+terraform/.terraform/
+terraform/*.tfstate
+terraform/*.tfstate.*
+terraform/terraform.tfvars
 .DS_Store
