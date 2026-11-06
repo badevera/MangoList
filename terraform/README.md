@@ -1,6 +1,6 @@
 # Terraform deployment
 
-Provisions the AWS environment for Mango List and pairs with the root `deploy.ps1` script for image publish and EC2 restart.
+Provisions the AWS environment for Mango List and pairs with `scripts/deploy.ps1` for image publish and EC2 restart.
 
 ## What gets created
 
@@ -33,16 +33,16 @@ Important `tfvars`:
 From the **repo root**:
 
 ```powershell
-.\deploy.ps1 -AwsProfile mango-terraform -AutoApprove
-.\deploy.ps1 -SkipApply                 # image rebuild + EC2 restart only
-.\deploy.ps1 -Destroy -AutoApprove      # tear down
+.\scripts\deploy.ps1 -AwsProfile mango-terraform -AutoApprove
+.\scripts\deploy.ps1 -SkipApply                 # image rebuild + EC2 restart only
+.\scripts\deploy.ps1 -Destroy -AutoApprove      # tear down
 ```
 
-`deploy.ps1` will:
+`scripts/deploy.ps1` will:
 
 1. `terraform init` / `validate` / `apply` (unless `-SkipApply`)
 2. Log in to ECR (via `cmd` — PowerShell piping breaks ECR login on Windows)
-3. `docker build` + `docker push`
+3. `docker build -f docker/Dockerfile` + `docker push`
 4. SSM into the instance: ensure Compose plugin, keep `?sslmode=require` on `DATABASE_URL`, pull and restart
 
 ## Manual deploy
@@ -63,7 +63,7 @@ REGION="$(aws configure get region)"
 # Windows PowerShell: use cmd for the login pipe
 cmd /c "aws ecr get-login-password --region %REGION% | docker login --username AWS --password-stdin %REGISTRY%"
 
-docker build -t "$REPOSITORY_URL:latest" .
+docker build -f docker/Dockerfile -t "$REPOSITORY_URL:latest" .
 docker push "$REPOSITORY_URL:latest"
 ```
 
@@ -96,7 +96,7 @@ aws ssm send-command \
 ## Cleanup
 
 ```powershell
-.\deploy.ps1 -Destroy -AutoApprove
+.\scripts\deploy.ps1 -Destroy -AutoApprove
 ```
 
 or `terraform -chdir=terraform destroy`.

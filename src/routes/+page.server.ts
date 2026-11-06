@@ -117,5 +117,38 @@ export const actions: Actions = {
     if (!userId || !name) return fail(400, { message: 'List name is required.' });
 
     await db.insert(groceryLists).values({ userId, name });
+  },
+
+  deleteItem: async ({ request, cookies }) => {
+    const userId = cookies.get('userId');
+    const formData = await request.formData();
+    const itemId = String(formData.get('itemId') ?? '');
+    if (!userId || !itemId) return fail(400, { message: 'Item is required.' });
+
+    const ownedItem = await db
+      .select({ id: groceryItems.id })
+      .from(groceryItems)
+      .innerJoin(groceryLists, eq(groceryItems.listId, groceryLists.id))
+      .where(and(eq(groceryItems.id, itemId), eq(groceryLists.userId, userId)))
+      .limit(1);
+    if (!ownedItem.length) return fail(404, { message: 'Item not found.' });
+
+    await db.delete(groceryItems).where(eq(groceryItems.id, itemId));
+  },
+
+  deleteList: async ({ request, cookies }) => {
+    const userId = cookies.get('userId');
+    const formData = await request.formData();
+    const listId = String(formData.get('listId') ?? '');
+    if (!userId || !listId) return fail(400, { message: 'List is required.' });
+
+    const [list] = await db
+      .select()
+      .from(groceryLists)
+      .where(and(eq(groceryLists.id, listId), eq(groceryLists.userId, userId)))
+      .limit(1);
+    if (!list) return fail(404, { message: 'List not found.' });
+
+    await db.delete(groceryLists).where(eq(groceryLists.id, listId));
   }
 };

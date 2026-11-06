@@ -8,8 +8,8 @@
     "build": "vite build",
     "preview": "vite preview",
     "check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
-    "db:up": "docker compose up -d",
-    "db:down": "docker compose down",
+    "db:up": "docker compose -f docker/docker-compose.yml -p mango-list up -d",
+    "db:down": "docker compose -f docker/docker-compose.yml -p mango-list down",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate"
   },

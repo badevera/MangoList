@@ -4,6 +4,19 @@ A grocery list app built with SvelteKit, TypeScript, Tailwind CSS, daisyUI, Post
 
 Sign in with a username (no password), create lists, and check off items. Data is stored in PostgreSQL.
 
+## Repository layout
+
+```text
+├── src/                 # SvelteKit app (routes, UI, DB client)
+├── drizzle/             # SQL migrations
+├── docker/              # Dockerfile + local Postgres Compose
+├── scripts/             # deploy.ps1 (Terraform + image + EC2 restart)
+├── terraform/           # AWS infrastructure as code
+├── drizzle.config.ts
+├── package.json
+└── README.md
+```
+
 ## Getting started (local)
 
 ```bash
@@ -19,14 +32,16 @@ Open [http://localhost:5173](http://localhost:5173).
 
 ### Local database
 
-Docker Compose runs PostgreSQL (`mango_list` / `mango_app` / `local_password` on port `5432`):
+`npm run db:up` starts Postgres via `docker/docker-compose.yml` (`mango_list` / `mango_app` / `local_password` on port `5432`):
 
 ```env
 DATABASE_URL=postgresql://mango_app:local_password@localhost:5432/mango_list
 ```
 
 - `npm run db:down` — stop Postgres (keeps data)
-- `docker compose down -v` — wipe local DB volumes
+- `docker compose -f docker/docker-compose.yml -p mango-list down -v` — wipe local DB volumes
+
+See [docker/README.md](docker/README.md).
 
 ## Scripts
 
@@ -38,7 +53,7 @@ DATABASE_URL=postgresql://mango_app:local_password@localhost:5432/mango_list
 | `npm run db:up` / `db:down` | Start / stop local Postgres |
 | `npm run db:generate` | Generate Drizzle migrations |
 | `npm run db:migrate` | Apply migrations |
-| `.\deploy.ps1` | AWS deploy (Terraform + Docker + EC2 restart) |
+| `.\scripts\deploy.ps1` | AWS deploy (Terraform + Docker + EC2 restart) |
 
 ## Health checks
 
@@ -124,7 +139,7 @@ flowchart LR
 | **Secrets Manager** | Holds the generated DB password (read at instance bootstrap) |
 | **IAM instance profile** | Lets EC2 use SSM, pull from ECR, and read the secret |
 
-Terraform under `terraform/` creates the VPC, EC2, Elastic IP, RDS, ECR, security groups, IAM profile, and secret. `deploy.ps1` applies Terraform, builds/pushes the image to ECR, and restarts the container over SSM.
+Terraform under `terraform/` creates the VPC, EC2, Elastic IP, RDS, ECR, security groups, IAM profile, and secret. `scripts/deploy.ps1` applies Terraform, builds/pushes the image to ECR, and restarts the container over SSM.
 
 `ORIGIN` in `terraform.tfvars` must match the URL users open (for example `https://mangolist.duckdns.org`). SvelteKit form actions fail with CSRF/`403` if it does not.
 
@@ -142,13 +157,13 @@ copy terraform\terraform.tfvars.example terraform\terraform.tfvars
 
 Set `allowed_app_cidr`, `origin`, region, and AZs.
 
-2. Deploy everything from the repo root:
+2. Deploy from the repo root:
 
 ```powershell
-.\deploy.ps1 -AwsProfile mango-terraform -AutoApprove
+.\scripts\deploy.ps1 -AwsProfile mango-terraform -AutoApprove
 ```
 
-This runs Terraform apply, builds/pushes the Docker image to ECR, and restarts the app on EC2 via SSM.
+This runs Terraform apply, builds/pushes the Docker image (`docker/Dockerfile`) to ECR, and restarts the app on EC2 via SSM.
 
 | Flag | Meaning |
 |------|---------|
@@ -169,7 +184,7 @@ Use `app_url` (from `origin`), not an old ephemeral IP. Point DuckDNS at `public
 ### Cleanup
 
 ```powershell
-.\deploy.ps1 -Destroy -AutoApprove
+.\scripts\deploy.ps1 -Destroy -AutoApprove
 ```
 
 Do not commit `terraform.tfvars`, Terraform state, or AWS keys. More detail: [terraform/README.md](terraform/README.md).

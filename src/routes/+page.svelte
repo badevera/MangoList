@@ -94,14 +94,35 @@
         </div>
         <nav class="space-y-1">
           {#each lists as list}
-            <button
-              class:!bg-white={activeListId === list.id}
-              class="flex w-full items-center justify-between rounded-xl px-4 py-3 text-left text-sm font-semibold text-slate-600 transition hover:bg-white"
-              on:click={() => (activeListId = list.id)}
+            <div
+              class:bg-white={activeListId === list.id}
+              class="group flex items-center gap-1 rounded-xl px-2 py-1 transition hover:bg-white"
             >
-              <span class="truncate">{list.name}</span>
-              <span class="ml-2 text-xs text-slate-400">{list.items.length}</span>
-            </button>
+              <button
+                class="min-w-0 flex-1 rounded-lg px-2 py-2 text-left text-sm font-semibold text-slate-600"
+                type="button"
+                on:click={() => (activeListId = list.id)}
+              >
+                <span class="flex items-center justify-between gap-2">
+                  <span class="truncate">{list.name}</span>
+                  <span class="text-xs text-slate-400">{list.items.length}</span>
+                </span>
+              </button>
+              <form method="POST" action="?/deleteList" use:enhance>
+                <input type="hidden" name="listId" value={list.id} />
+                <button
+                  class="btn btn-ghost btn-xs rounded-lg text-slate-400 opacity-0 hover:bg-red-50 hover:text-red-600 group-hover:opacity-100"
+                  type="submit"
+                  aria-label="Delete {list.name}"
+                  title="Delete list"
+                  on:click={(event) => {
+                    if (!confirm(`Delete “${list.name}” and all of its items?`)) event.preventDefault();
+                  }}
+                >
+                  ×
+                </button>
+              </form>
+            </div>
           {/each}
         </nav>
         {#if showNewList}
@@ -121,7 +142,18 @@
               <p class="mb-2 text-sm font-semibold text-leaf">{completedCount} of {activeList.items.length} checked off</p>
               <h1 class="font-display text-5xl">{activeList.name}</h1>
             </div>
-            <span class="rounded-full bg-[#f7e6bf] px-4 py-2 text-sm font-semibold text-[#916624]">This week</span>
+            <form method="POST" action="?/deleteList" use:enhance>
+              <input type="hidden" name="listId" value={activeList.id} />
+              <button
+                class="btn btn-ghost rounded-xl text-slate-500 hover:bg-red-50 hover:text-red-600"
+                type="submit"
+                on:click={(event) => {
+                  if (!confirm(`Delete “${activeList?.name}” and all of its items?`)) event.preventDefault();
+                }}
+              >
+                Delete list
+              </button>
+            </form>
           </div>
           <form class="mb-5 flex gap-3" method="POST" action="?/addItem" use:enhance>
             <input type="hidden" name="listId" value={activeList.id} />
@@ -136,14 +168,33 @@
               </div>
             {:else}
               {#each activeList.items as item}
-                <label class="flex cursor-pointer items-center gap-4 border-b border-slate-100 px-5 py-4 last:border-0 hover:bg-slate-50">
+                <div class="group flex items-center gap-4 border-b border-slate-100 px-5 py-4 last:border-0 hover:bg-slate-50">
                   <form method="POST" action="?/toggleItem" use:enhance>
                     <input type="hidden" name="itemId" value={item.id} />
                     <input type="hidden" name="completed" value={String(!item.completed)} />
-                    <input type="checkbox" class="checkbox checkbox-success" checked={item.completed} on:change={(event) => event.currentTarget.form?.requestSubmit()} />
+                    <input
+                      type="checkbox"
+                      class="checkbox checkbox-success"
+                      checked={item.completed}
+                      aria-label="Mark {item.name} complete"
+                      on:change={(event) => event.currentTarget.form?.requestSubmit()}
+                    />
                   </form>
-                  <span class:line-through={item.completed} class:text-slate-400={item.completed}>{item.name}</span>
-                </label>
+                  <span class:line-through={item.completed} class:text-slate-400={item.completed} class="min-w-0 flex-1">
+                    {item.name}
+                  </span>
+                  <form method="POST" action="?/deleteItem" use:enhance>
+                    <input type="hidden" name="itemId" value={item.id} />
+                    <button
+                      class="btn btn-ghost btn-sm rounded-lg text-slate-400 opacity-0 hover:bg-red-50 hover:text-red-600 group-hover:opacity-100"
+                      type="submit"
+                      aria-label="Delete {item.name}"
+                      title="Delete item"
+                    >
+                      Delete
+                    </button>
+                  </form>
+                </div>
               {/each}
             {/if}
           </div>

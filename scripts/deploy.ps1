@@ -3,10 +3,10 @@
   Deploy Mango List: Terraform apply + Docker build/push + restart app on EC2.
 
 .EXAMPLE
-  .\deploy.ps1
-  .\deploy.ps1 -SkipApply
-  .\deploy.ps1 -Destroy
-  .\deploy.ps1 -AwsProfile mango-terraform
+  .\scripts\deploy.ps1
+  .\scripts\deploy.ps1 -SkipApply
+  .\scripts\deploy.ps1 -Destroy
+  .\scripts\deploy.ps1 -AwsProfile mango-terraform
 #>
 [CmdletBinding()]
 param(
@@ -18,7 +18,7 @@ param(
 )
 
 $ErrorActionPreference = "Stop"
-$Root = $PSScriptRoot
+$Root = Split-Path -Parent $PSScriptRoot
 Set-Location $Root
 
 function Write-Step([string] $Message) {
@@ -127,7 +127,8 @@ if ($LASTEXITCODE -ne 0) { throw "ECR docker login failed." }
 Write-Ok "Login succeeded"
 
 Write-Step "Building image $Image"
-Invoke-Checked { docker build -t $Image $Root } "docker build failed."
+$Dockerfile = Join-Path $Root "docker\Dockerfile"
+Invoke-Checked { docker build -f $Dockerfile -t $Image $Root } "docker build failed."
 Write-Ok "Build complete"
 
 Write-Step "Pushing image"
@@ -189,4 +190,4 @@ Write-Host "  Image:      $Image"
 Write-Host "  Instance:   $InstanceId"
 Write-Host ""
 Write-Host "app_url comes from terraform.tfvars origin (not an ephemeral IP)."
-Write-Host "Tear down later with:  .\deploy.ps1 -Destroy -AutoApprove"
+Write-Host "Tear down later with:  .\scripts\deploy.ps1 -Destroy -AutoApprove"
